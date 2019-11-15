@@ -1,13 +1,26 @@
 // tslint:disable-next-line:max-line-length
-import { Injectable, InjectionToken, NgModuleFactory, NgModuleFactoryLoader, ViewContainerRef, NgModuleRef, Type, TemplateRef, ComponentFactoryResolver, Compiler } from '@angular/core';
+import {
+  Compiler,
+  ComponentFactoryResolver,
+  Injectable,
+  InjectionToken,
+  NgModuleFactory,
+  NgModuleFactoryLoader,
+  NgModuleRef,
+  TemplateRef,
+  Type,
+  ViewContainerRef
+} from '@angular/core';
+import { ILoadableRootOptions, ModuleConfig } from './loadable.config';
 
-import { ModuleConfig, ILoadableRootOptions } from './loadable.config';
-
-export const LOADABLE_CONFIG = new InjectionToken<ModuleConfig[]>('LOADABLE_CONFIG');
-export const LOADABLE_ROOT_OPTIONS = new InjectionToken<ILoadableRootOptions>('LOADABLE_ROOT_OPTIONS');
+export const LOADABLE_CONFIG = new InjectionToken<ModuleConfig[]>(
+  'LOADABLE_CONFIG'
+);
+export const LOADABLE_ROOT_OPTIONS = new InjectionToken<ILoadableRootOptions>(
+  'LOADABLE_ROOT_OPTIONS'
+);
 
 const LOG_PREFIX = 'ngx-loadable';
-
 
 @Injectable({
   providedIn: 'root'
@@ -17,8 +30,8 @@ export class LoadableService {
   constructor(
     private loader: NgModuleFactoryLoader,
     private cfr: ComponentFactoryResolver,
-    private compiler: Compiler,
-  ) { }
+    private compiler: Compiler
+  ) {}
 
   addConfig(config: ModuleConfig[]) {
     config.forEach(newModule => {
@@ -48,8 +61,7 @@ export class LoadableService {
   preload(module: string): Promise<NgModuleFactory<any>> {
     const loadChildren = this.getModulePath(module);
     if (typeof loadChildren === 'string') {
-      return this.loader
-        .load(loadChildren);
+      return this.loader.load(loadChildren);
     } else {
       return loadChildren().then((t: any) => {
         if (t instanceof NgModuleFactory) {
@@ -65,31 +77,44 @@ export class LoadableService {
     if (!modules) {
       modules = this.modules.map(m => m.name);
     }
-    return Promise.all(modules.map(module => {
-      return this.preload(module);
-    }));
+    return Promise.all(
+      modules.map(module => {
+        return this.preload(module);
+      })
+    );
   }
 
-  _renderVCR(mr: NgModuleRef<any> | Type<any> | TemplateRef<any>, vcr: ViewContainerRef) {
-    let factory;
+  _renderVCR(
+    mr: NgModuleRef<any> | Type<any> | TemplateRef<any>,
+    vcr: ViewContainerRef,
+    phr: ViewContainerRef
+  ) {
+    let factory: any;
+
     if (!mr) {
       return;
     }
+
     if (mr instanceof TemplateRef) {
       vcr.remove();
       return vcr.createEmbeddedView(mr);
     }
+
     if ((mr as NgModuleRef<any>).componentFactoryResolver) {
       const rootComponent = (mr as any)._bootstrapComponents[0];
-      factory = (mr as NgModuleRef<any>).componentFactoryResolver.resolveComponentFactory(
-        rootComponent
-      );
+      factory = (mr as NgModuleRef<
+        any
+      >).componentFactoryResolver.resolveComponentFactory(rootComponent);
     } else {
-      factory = this.cfr.resolveComponentFactory(
-        (mr as Type<any>),
-      );
+      factory = this.cfr.resolveComponentFactory(mr as Type<any>);
     }
+
     vcr.remove();
+
+    setTimeout(() => {
+      phr.remove();
+    }, 5000);
+
     return vcr.createComponent(factory);
   }
 }

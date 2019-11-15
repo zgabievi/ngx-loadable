@@ -1,115 +1,200 @@
 import {
   Component,
-  NgModuleRef,
-  Input,
-  ViewContainerRef,
-  Injector,
-  ViewChild,
-  SimpleChanges,
-  OnChanges,
-  Output,
-  EventEmitter,
-  TemplateRef,
   ContentChild,
   ElementRef,
+  EventEmitter,
+  HostBinding,
+  Inject,
+  Injector,
+  Input,
+  NgModuleRef,
+  OnChanges,
+  OnInit,
   Optional,
-  Inject
+  Output,
+  SimpleChanges,
+  TemplateRef,
+  ViewChild,
+  ViewContainerRef
 } from '@angular/core';
-import { LoadableService, LOADABLE_ROOT_OPTIONS } from './loadable.service';
 import { ILoadableRootOptions } from './loadable.config';
+import { LoadableService, LOADABLE_ROOT_OPTIONS } from './loadable.service';
 
 @Component({
   selector: 'ngx-loadable',
   template: `
-    <ng-template #content></ng-template>
+    <div #content></div>
+    <div #placeholder></div>
   `,
-  styles: [],
+  styles: []
 })
-export class LoadableComponent implements OnChanges {
+export class LoadableComponent implements OnInit, OnChanges {
+  //
+  @HostBinding('class') cls: string;
+
+  //
   @Input() module: string;
+
+  //
   @Input() show = false;
+
+  //
   @Input() timeout: number | undefined;
+
+  //
   @Input() isElement: boolean;
+
+  //
   @Output() init = new EventEmitter();
 
-  @ViewChild('content', { read: ViewContainerRef, static: true }) content: ViewContainerRef;
-  @ContentChild('loading', { read: TemplateRef, static: false }) loadingTemplate: TemplateRef<any>;
-  @ContentChild('error', { read: TemplateRef, static: false }) errorTemplate: TemplateRef<any>;
-  @ContentChild('timedOut', { read: TemplateRef, static: false }) timeoutTemplate: TemplateRef<any>;
-  private mr: NgModuleRef<any>;
-  loading = false;
-  loaded = false;
-  error = false;
-  timedOut: boolean;
-  timeoutRef;
+  //
+  @ViewChild('content', { read: ViewContainerRef, static: true })
+  content: ViewContainerRef;
 
+  //
+  @ViewChild('placeholder', { read: ViewContainerRef, static: true })
+  placeholder: ViewContainerRef;
+
+  //
+  @ContentChild('loading', { read: TemplateRef, static: false })
+  loadingTemplate: TemplateRef<any>;
+
+  //
+  @ContentChild('error', { read: TemplateRef, static: false })
+  errorTemplate: TemplateRef<any>;
+
+  //
+  @ContentChild('timedOut', { read: TemplateRef, static: false })
+  timeoutTemplate: TemplateRef<any>;
+
+  //
+  private moduleRef: NgModuleRef<any>;
+
+  //
+  loading = false;
+
+  //
+  loaded = false;
+
+  //
+  error = false;
+
+  //
+  timedOut: boolean;
+
+  //
+  timeoutRef: any;
+
+  //
   constructor(
-    private inj: Injector,
-    private ls: LoadableService,
-    private el: ElementRef,
-    @Optional() @Inject(LOADABLE_ROOT_OPTIONS) private options: ILoadableRootOptions,
+    @Optional()
+    @Inject(LOADABLE_ROOT_OPTIONS)
+    private options: ILoadableRootOptions,
+    private loadable: LoadableService,
+    private elementRef: ElementRef,
+    private injector: Injector
   ) {}
 
-  public async preload() {
+  //
+  ngOnInit(): void {
+    this.cls = `component-${this.module}`;
+  }
+
+  //
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.show && changes.show.currentValue) {
+      if (this.loaded) {
+        this._render();
+        return;
+      }
+
+      this.loadFn();
+    }
+  }
+
+  //
+  public async preload(): Promise<any> {
     if (!this.module) {
       return;
     }
 
     try {
-      const mf = await this.ls.preload(this.module);
+      const moduleFactory = await this.loadable.preload(this.module);
+
       this.loaded = true;
       this.timedOut = false;
-      this.mr = mf.create(this.inj);
-      return mf;
+      this.moduleRef = moduleFactory.create(this.injector);
+
+      return moduleFactory;
     } catch (error) {
       this.error = error;
-      this.ls._renderVCR(
-        this.errorTemplate || this.ls.getModule(this.module).errorComponent || this.options.errorComponent,
-        this.content,
+
+      this.loadable._renderVCR(
+        this.errorTemplate ||
+          this.loadable.getModule(this.module).errorComponent ||
+          this.options.errorComponent,
+        this.content
       );
+
       return error;
     }
   }
 
-  private _render() {
-    const module = this.ls.getModule(this.module);
+  //
+  private _render(): void {
+    const module = this.loadable.getModule(this.module);
+
     if (this.isElement || module.isElement || this.options.isElement) {
       const componentInstance = document.createElement(module.name);
+
       this.init.next({
-        instance: componentInstance,
+        instance: componentInstance
       });
-      this.el.nativeElement.appendChild(componentInstance);
+
+      this.elementRef.nativeElement.appendChild(componentInstance);
       this.loading = false;
       return;
     }
-    const componentRef = this.ls._renderVCR(this.mr, this.content);
+
+    const componentRef = this.loadable._renderVCR(this.moduleRef, this.content, this.placeholder);
     this.init.next(componentRef);
     this.loading = false;
   }
 
-  reload() {
+  //
+  reload(): void {
     this.timedOut = false;
     this.error = undefined;
     this.loadFn();
   }
 
-  _renderTimeoutTemplate() {
+  //
+  _renderTimeoutTemplate(): void {
     this.timedOut = true;
-    this.ls._renderVCR(
-      this.timeoutTemplate || this.ls.getModule(this.module).timeoutTemplate || this.options.timeoutTemplate,
+
+    this.loadable._renderVCR(
+      this.timeoutTemplate ||
+        this.loadable.getModule(this.module).timeoutTemplate ||
+        this.options.timeoutTemplate,
       this.content
     );
   }
 
-  loadFn() {
+  //
+  loadFn(): void {
     if (typeof this.timeout === 'string') {
       this.timeout = parseInt(this.timeout, 10);
     }
+
     this.loading = true;
-    this.ls._renderVCR(
-      this.loadingTemplate || this.ls.getModule(this.module).loadingComponent || this.options.loadingComponent,
-      this.content,
+
+    this.loadable._renderVCR(
+      this.loadingTemplate ||
+        this.loadable.getModule(this.module).loadingComponent ||
+        this.options.loadingComponent,
+      this.placeholder
     );
+
     if (this.timeout === 0) {
       this._renderTimeoutTemplate();
     } else if (this.timeout > 0) {
@@ -117,26 +202,18 @@ export class LoadableComponent implements OnChanges {
         this._renderTimeoutTemplate();
       }, this.timeout);
     }
-    this.preload()
-      .then((mf) => {
-        if (this.timeoutRef) {
-          clearTimeout(this.timeoutRef);
-        }
-        if (mf instanceof Error) {
-          return;
-        }
-        this.loading = false;
-        this._render();
-      });
-  }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes.show && changes.show.currentValue) {
-      if (this.loaded) {
-        this._render();
+    this.preload().then(mf => {
+      if (this.timeoutRef) {
+        clearTimeout(this.timeoutRef);
+      }
+
+      if (mf instanceof Error) {
         return;
       }
-      this.loadFn();
-    }
+
+      this.loading = false;
+      this._render();
+    });
   }
 }
