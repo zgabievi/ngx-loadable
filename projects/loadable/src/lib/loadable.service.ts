@@ -87,7 +87,7 @@ export class LoadableService {
   _renderVCR(
     mr: NgModuleRef<any> | Type<any> | TemplateRef<any>,
     vcr: ViewContainerRef,
-    phr: ViewContainerRef
+    phr?: ViewContainerRef
   ) {
     let factory: any;
 
@@ -111,9 +111,23 @@ export class LoadableService {
 
     vcr.remove();
 
-    setTimeout(() => {
-      phr.remove();
-    }, 5000);
+    if (phr) {
+      const phrElement = phr.get(0) as any;
+
+      if (phrElement && phrElement.rootNodes && phrElement.rootNodes[0]) {
+        phrElement.rootNodes[0].classList.add('is-disappearing');
+      }
+
+      setTimeout(() => {
+        phr.remove();
+
+        const vcrElement = phr.get(0) as any;
+
+        if (vcrElement && vcrElement.rootNodes && vcrElement.rootNodes[0]) {
+          vcrElement.rootNodes[0].classList.add('is-visible');
+        }
+      }, 1000);
+    }
 
     return vcr.createComponent(factory);
   }

@@ -3,13 +3,11 @@ import {
   ContentChild,
   ElementRef,
   EventEmitter,
-  HostBinding,
   Inject,
   Injector,
   Input,
   NgModuleRef,
   OnChanges,
-  OnInit,
   Optional,
   Output,
   SimpleChanges,
@@ -23,15 +21,12 @@ import { LoadableService, LOADABLE_ROOT_OPTIONS } from './loadable.service';
 @Component({
   selector: 'ngx-loadable',
   template: `
-    <div #content></div>
-    <div #placeholder></div>
+    <ng-template #content></ng-template>
+    <ng-template #placeholder></ng-template>
   `,
   styles: []
 })
-export class LoadableComponent implements OnInit, OnChanges {
-  //
-  @HostBinding('class') cls: string;
-
+export class LoadableComponent implements OnChanges {
   //
   @Input() module: string;
 
@@ -96,11 +91,6 @@ export class LoadableComponent implements OnInit, OnChanges {
   ) {}
 
   //
-  ngOnInit(): void {
-    this.cls = `component-${this.module}`;
-  }
-
-  //
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.show && changes.show.currentValue) {
       if (this.loaded) {
@@ -156,7 +146,11 @@ export class LoadableComponent implements OnInit, OnChanges {
       return;
     }
 
-    const componentRef = this.loadable._renderVCR(this.moduleRef, this.content, this.placeholder);
+    const componentRef = this.loadable._renderVCR(
+      this.moduleRef,
+      this.content,
+      this.placeholder
+    );
     this.init.next(componentRef);
     this.loading = false;
   }

@@ -32,6 +32,8 @@ MIT
 @angular/forms
 MIT
 
+undefined
+
 @angular/platform-browser
 MIT
 
@@ -76,7 +78,7 @@ W3C-20150513
 
 lodash
 MIT
-Copyright JS Foundation and other contributors <https://js.foundation/>
+Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
 
 Based on Underscore.js, copyright Jeremy Ashkenas,
 DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
@@ -442,8 +444,6 @@ If the Work includes a "NOTICE" text file as part of its distribution, then any 
 END OF TERMS AND CONDITIONS
 
 
-undefined
-
 webpack
 MIT
 Copyright JS Foundation and other contributors
@@ -472,7 +472,7 @@ zone.js
 MIT
 The MIT License
 
-Copyright (c) 2010-2019 Google LLC. http://angular.io/license
+Copyright (c) 2016-2018 Google, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

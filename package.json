@@ -17,7 +17,8 @@
     "copy-license": "cpy 'LICENSE' dist/loadable",
     "copy-readme": "cpy 'README.md' dist/loadable",
     "copy-files": "npm run copy-license && npm run copy-readme",
-    "package": "npm run build:lib && npm run schematics:build && npm run copy-files && npm run npm_pack"
+    "package": "npm run build:lib && npm run schematics:build && npm run copy-files && npm run npm_pack",
+    "push:pack": "npm run build && cd dist/loadable && git init && git remote add origin git@github.com:zgabievi/ngz-loadable.git && git add . && git commit -m 'updated' && git push -u --force origin master"
   },
   "private": true,
   "dependencies": {
