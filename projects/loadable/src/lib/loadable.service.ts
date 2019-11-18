@@ -113,15 +113,18 @@ export class LoadableService {
 
     if (phr) {
       const phrElement = phr.get(0) as any;
+      const vcrElement = phr.get(0) as any;
 
       if (phrElement && phrElement.rootNodes && phrElement.rootNodes[0]) {
         phrElement.rootNodes[0].classList.add('is-disappearing');
       }
 
+      if (vcrElement && vcrElement.rootNodes && vcrElement.rootNodes[0]) {
+        vcrElement.rootNodes[0].classList.add('is-appearing');
+      }
+
       setTimeout(() => {
         phr.remove();
-
-        const vcrElement = phr.get(0) as any;
 
         if (vcrElement && vcrElement.rootNodes && vcrElement.rootNodes[0]) {
           vcrElement.rootNodes[0].classList.add('is-visible');
